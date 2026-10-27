@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../config/routes.dart';
 import '../data/dummy_data.dart';
 import '../models/anime.dart';
 import '../providers/app_state_provider.dart';
@@ -14,7 +16,14 @@ class DetailScreen extends StatelessWidget {
     required this.animeId,
   });
 
-  @override
+  void _goBack(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(AppRoutes.home);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -55,7 +64,7 @@ class DetailScreen extends StatelessWidget {
               ),
               SizedBox(height: screenHeight * 0.03),
               ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => _goBack(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0b395e),
                 ),
@@ -92,9 +101,7 @@ class DetailScreen extends StatelessWidget {
               ),
               child: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
+                onPressed: () => _goBack(context),
               ),
             ),
 
@@ -200,7 +207,8 @@ class DetailScreen extends StatelessWidget {
                                   size: screenWidth * 0.07,
                                 ),
                                 onPressed: () {
-                                  favoriteProvider.toggleFavorite(anime);
+                                  // Aksi -> context.read (tidak perlu listen)
+                                  context.read<AppStateProvider>().toggleFavorite(anime);
                                 },
                               ),
                             );

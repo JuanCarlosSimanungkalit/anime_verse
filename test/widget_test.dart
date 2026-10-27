@@ -1,30 +1,64 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:anime_verse/data/dummy_data.dart';
+import 'package:anime_verse/providers/app_state_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:anime_verse/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  group('AppStateProvider', () {
+    test('toggleFavorite menambah lalu menghapus favorit & memanggil notifyListeners', () {
+      final provider = AppStateProvider();
+      var notified = 0;
+      provider.addListener(() => notified++);
+      final anime = DummyData.animeList.first;
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+      provider.toggleFavorite(anime);
+      expect(provider.isFavorite(anime.id), isTrue);
+      expect(provider.favorites.length, 1);
+
+      provider.toggleFavorite(anime);
+      expect(provider.isFavorite(anime.id), isFalse);
+      expect(provider.favorites, isEmpty);
+      expect(notified, 2);
+    });
+
+    test('daftar favorit tidak bisa diubah dari luar', () {
+      final provider = AppStateProvider();
+      expect(() => provider.favorites.add(DummyData.animeList.first),
+          throwsUnsupportedError);
+    });
+
+    test('filter genre pada Home', () {
+      final provider = AppStateProvider();
+      provider.setSelectedGenre('Action');
+      final result = provider.getFilteredAnimeForHome();
+      expect(result, isNotEmpty);
+      expect(
+        result.every((a) =>
+            a.genre.split(',').map((g) => g.trim()).contains('Action')),
+        isTrue,
+      );
+    });
+
+    test('filter pencarian Home case-insensitive', () {
+      final provider = AppStateProvider();
+      provider.setHomeSearchQuery('black CLOVER');
+      final result = provider.getFilteredAnimeForHome();
+      expect(result.length, 1);
+      expect(result.first.title, 'Black Clover');
+    });
+
+    test('filter pencarian Favorit', () {
+      final provider = AppStateProvider();
+      provider.addFavorite(DummyData.animeList[0]);
+      provider.addFavorite(DummyData.animeList[1]);
+      provider.setFavoriteSearchQuery('hero');
+      expect(provider.getFilteredFavorites().length, 1);
+    });
   });
 }

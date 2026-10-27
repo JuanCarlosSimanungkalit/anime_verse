@@ -40,15 +40,14 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: Consumer<AppStateProvider>(
-        builder: (context, provider, child) {
-          final filteredAnime = provider.getFilteredAnimeForHome();
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Search Bar
-                Padding(
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Search Bar: Consumer hanya untuk bagian yang bergantung pada state
+            Consumer<AppStateProvider>(
+              builder: (context, provider, child) {
+                return Padding(
                   padding: EdgeInsets.all(screenWidth * 0.04),
                   child: Container(
                     decoration: BoxDecoration(
@@ -64,7 +63,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: TextField(
                       controller: _searchController,
                       onChanged: (value) {
-                        provider.setHomeSearchQuery(value);
+                        // Aksi -> context.read (tidak perlu listen)
+                        context.read<AppStateProvider>().setHomeSearchQuery(value);
                       },
                       decoration: InputDecoration(
                         hintText: "Anime Title",
@@ -82,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           icon: Icon(Icons.clear, color: Colors.white),
                           onPressed: () {
                             _searchController.clear();
-                            provider.setHomeSearchQuery('');
+                            context.read<AppStateProvider>().setHomeSearchQuery('');
                           },
                         )
                             : null,
@@ -113,22 +113,28 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   ),
 
-                ),
-                // home_screen.dart
-                GenreList(
+                );
+              },
+            ),
+            Consumer<AppStateProvider>(
+              builder: (context, provider, child) {
+                return GenreList(
                   selected: provider.selectedGenre,
                   onGenreSelected: (genre) {
-                    provider.setSelectedGenre(genre);
+                    context.read<AppStateProvider>().setSelectedGenre(genre);
                   },
-                ),
-                SizedBox(height: screenHeight * 0.03),
-                AnimeView(animeList: filteredAnime),
-                SizedBox(height: screenHeight * 0.025),
-
-              ],
+                );
+              },
             ),
-          );
-        }
+            SizedBox(height: screenHeight * 0.03),
+            Consumer<AppStateProvider>(
+              builder: (context, provider, child) {
+                return AnimeView(animeList: provider.getFilteredAnimeForHome());
+              },
+            ),
+            SizedBox(height: screenHeight * 0.025),
+          ],
+        ),
       ),
     );
 

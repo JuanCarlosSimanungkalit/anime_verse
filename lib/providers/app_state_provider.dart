@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -19,7 +20,8 @@ class AppStateProvider extends ChangeNotifier {
 
   // 2. GETTER (Akses Publik)
 // Widget lain hanya bisa 'mendapatkan' datanya, tidak bisa mengubah.
-  List<Anime> get favorites => _favorites;
+  // UnmodifiableListView: widget hanya boleh membaca, tidak bisa mengubah list.
+  List<Anime> get favorites => UnmodifiableListView(_favorites);
   String get selectedGenre => _selectedGenre;
   // app_state_provider.dart
   String get homeSearchQuery => _homeSearchQuery;
@@ -91,9 +93,12 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   void removeFavorite(String animeId) {
+    final before = _favorites.length;
     _favorites.removeWhere((anime) => anime.id == animeId);
-    _saveFavorites();
-    notifyListeners();
+    if (_favorites.length != before) {
+      _saveFavorites();
+      notifyListeners();
+    }
   }
 
   AppStateProvider() {
@@ -114,7 +119,7 @@ class AppStateProvider extends ChangeNotifier {
           'rating': anime.rating,
           'totalEpisodes': anime.totalEpisodes,
           'description': anime.description,
-        };; // Sertakan semua properti yang ingin disimpan
+        };
       }).toList();
       // Encode List<Map> menjadi String JSON dan Simpan String JSON ke SharedPreferences
       await prefs.setString(_storageKey, json.encode(favoritesJson));
@@ -134,7 +139,7 @@ class AppStateProvider extends ChangeNotifier {
         // 2. Decode String JSON menjadi List<dynamic> (List of Maps)
         final List<dynamic> decoded = json.decode(favoritesJson);
         // 3. Konversi List<dynamic> menjadi List<Anime>
-        _favorites = decoded.map((item) {
+        final loaded = decoded.map((item) {
           // Pastikan semua properti di-handle
           return Anime(
             id: item['id'],
@@ -146,6 +151,10 @@ class AppStateProvider extends ChangeNotifier {
             description: item['description'],
           );
         }).toList();
+        // Gabungkan dengan favorit yang mungkin sudah ditambah pengguna
+        // sebelum proses load selesai, agar tidak tertimpa.
+        final pending = _favorites.where((a) => !loaded.any((l) => l.id == a.id));
+        _favorites = [...loaded, ...pending];
         notifyListeners();
       }
     } catch (e) {

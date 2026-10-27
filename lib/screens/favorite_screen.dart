@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../data/dummy_data.dart';
 import '../providers/app_state_provider.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/favorite_anime_card.dart';
@@ -67,7 +66,8 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                   return TextField(
                     controller: _searchController,
                     onChanged: (value) {
-                      provider.setFavoriteSearchQuery(value);
+                      // Aksi -> context.read (tidak perlu listen)
+                      context.read<AppStateProvider>().setFavoriteSearchQuery(value);
                     },
                     decoration: InputDecoration(
                       hintText: "Anime Title",
@@ -85,7 +85,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                         icon: Icon(Icons.clear, color: Colors.white),
                         onPressed: () {
                           _searchController.clear();
-                          provider.setFavoriteSearchQuery("");
+                          context.read<AppStateProvider>().setFavoriteSearchQuery("");
                         },
                       )
                           : null,
@@ -133,6 +133,14 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                     child: Text(
                         'No Favorite Anime',
                         style: TextStyle(color: Colors.white),
+                    ),
+                  );
+                }
+                if (filteredFavorites.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No Anime Found',
+                      style: TextStyle(color: Colors.white),
                     ),
                   );
                 }

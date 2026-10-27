@@ -3,7 +3,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import '../config/routes.dart';
 import '../widgets/app_scaffold.dart';
-import 'home_screen.dart';
 
 class SignInScreen extends StatelessWidget {
   const SignInScreen({super.key});
@@ -153,10 +152,7 @@ class SignInScreen extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: () {
                             // TODO: Implement sign in functionality
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(builder: (context) => const HomeScreen()),
-                            );
-                            context.go('/home');
+                            context.go(AppRoutes.home);
 
 
                           },
